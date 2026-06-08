@@ -1,3 +1,5 @@
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
 import pandas as pd
@@ -154,9 +156,26 @@ async def send_calendar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         filename="Study_Progress_Report.xlsx", 
         caption="📅 Here is your testing history spreadsheet with sequential days!"
     )
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is alive and holding the port open!")
+
+def run_dummy_server():
+    # Render assigns a dynamic port via the PORT environment variable
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), DummyHandler)
+    server.serve_forever()
 
 # --- MAIN EXECUTION ---
 if __name__ == '__main__':
+
+# 1. Start the dummy web server in the background
+    threading.Thread(target=run_dummy_server, daemon=True).start()
+    
+    # 2. Start the Telegram Bot
+
     print("Bot is starting...")
     app = Application.builder().token(TOKEN).build()
 
